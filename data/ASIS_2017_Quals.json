@@ -1,0 +1,1 @@
+{"challenges": [{"name": "ret2libc", "attach": ["https://raw.githubusercontent.com/sajjadium/ctf-archives/main/ctfs/ASIS/2017/Quals/ret2libc/in.txt", "https://raw.githubusercontent.com/sajjadium/ctf-archives/main/ctfs/ASIS/2017/Quals/ret2libc/ret2libc"]}]}

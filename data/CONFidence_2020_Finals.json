@@ -1,0 +1,1 @@
+{"challenges": [{"name": "kvm", "attach": ["https://raw.githubusercontent.com/sajjadium/ctf-archives/main/ctfs/CONFidence/2020/Finals/kvm/example.shellcode", "https://raw.githubusercontent.com/sajjadium/ctf-archives/main/ctfs/CONFidence/2020/Finals/kvm/kvm", null]}]}

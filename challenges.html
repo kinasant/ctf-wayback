@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html data-bs-theme="dark">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <style>.ll-nam{color:#2196f3}.ll-num{color:#ec407a}.ll-str{color:#43a047}.ll-rex{color:#ef6c00}.ll-pct{color:#666}.ll-key{color:#555;font-weight:bold}.ll-com{color:#aaa;font-style:italic}</style>
+  <title>CTF Challenges</title>
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <link rel="stylesheet" href="./open_files/main.e9ec7884.css">
+  
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+  
+    .challenge-button { cursor: pointer; }
+  
+    .challenge-desc { white-space: pre-wrap; }
+  
+    .file-attachment { text-decoration: none; }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+  <div class="container">
+    <a href="home.html" class="navbar-brand">CTF Wayback</a>
+    <button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#base-navbars">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="base-navbars">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="#">Scoreboard</a></li>
+        <li class="nav-item"><a class="nav-link active" href="#">Challenges</a></li>
+      </ul>
+      <ul class="navbar-nav ms-md-auto d-block d-sm-flex d-md-flex">
+         <li class="nav-item">
+          <button class="nav-link theme-switch" type="button" onclick="toggleTheme()">
+            <i class="fas fa-adjust"></i> Toggle Theme
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main role="main">
+  <div class="jumbotron">
+    <div class="container">
+      <h1>Challenges</h1>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <div x-data="ChallengeBoard">
+      
+      <div id="challenge-window" class="modal fade" tabindex="-1" role="dialog" x-html="modalContent"></div>
+
+      
+      <div x-show="!loaded">
+        <div class="min-vh-50 d-flex align-items-center">
+          <div class="text-center w-100">
+            <i class="fas fa-circle-notch fa-spin fa-3x fa-fw spinner"></i>
+          </div>
+        </div>
+      </div>
+
+
+      <div x-show="loaded" style="display: none;">
+        <template x-for="category in categories" :key="category">
+          <div class="pt-5">
+            <div class="category-header mb-3">
+              <h3 x-text="category"></h3>
+            </div>
+
+            <div class="category-challenges d-flex flex-column">
+              <div class="challenges-row row">
+                <template x-for="c in getChallenges(category)" :key="c.id">
+                  <div class="col-sm-6 col-md-4 col-lg-3 my-3">
+                    <button class="challenge-button btn btn-dark w-100 h-100" 
+                            :class="'tag-' + category"
+                            @click="loadChallenge(c.id)">
+                      <div class="challenge-inner my-3">
+                        <p x-text="c.name"></p>
+                        <span x-text="c.value"></span>
+                      </div>
+                    </button>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container text-center">
+    <a href="https://ctfd.io/" class="text-secondary">
+      <small class="text-muted">
+        Powered by CTFd
+      </small>
+    </a>
+  </div>
+</footer>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+
+<script>
+  function toggleTheme() {
+    const html = document.querySelector('html');
+    html.setAttribute('data-bs-theme', html.getAttribute('data-bs-theme') === 'dark' ? 'light' : 'dark');
+  }
+</script>
+
+<script>
+  document.addEventListener('alpine:init', () => {
+    Alpine.data('ChallengeBoard', () => ({
+      loaded: false,
+      rawChallenges: [],
+      categories: [],
+      modalContent: '',
+      ctfName: '',
+
+      async init() {
+        try {
+          const params = new URLSearchParams(window.location.search);
+          this.ctfName = params.get('ctf');
+
+          if (!this.ctfName) throw new Error("No CTF specified");
+
+          
+          const response = await fetch(`data/${this.ctfName}.json`);
+          
+          if (!response.ok) throw new Error("File not found");
+          
+          const data = await response.json();
+          
+          let idCounter = 1;
+          this.rawChallenges = [];
+          this.categories = Object.keys(data).sort();
+
+          
+          this.categories.forEach(cat => {
+            data[cat].forEach(chal => {
+              this.rawChallenges.push({
+                id: idCounter++,
+                category: cat,
+                name: chal.name,
+                description: chal.desc||"",
+                files: chal.attach || [],
+                value: 500 
+              });
+            });
+          });
+          this.loaded = true;
+        } catch (error) {
+          console.error("Error loading temp.json", error);
+        }
+      },
+
+      getChallenges(category) {
+        return this.rawChallenges.filter(c => c.category === category);
+      },
+      formatFilename(url) {
+        if (!url) return '';
+        
+        let filename = url.split('/').pop().split('?')[0];
+        
+        
+        filename = decodeURIComponent(filename);
+
+        
+        const maxLength = 10;
+        if (filename.length > maxLength) {
+          return filename.substring(0, maxLength) + '...';
+        }
+        return filename;
+      },
+      loadChallenge(id) {
+        const c = this.rawChallenges.find(x => x.id === id);
+        if (!c) return;
+
+        
+        let validFiles = [];
+        let hasNullFiles = false;
+        const base_url = "https://github.com/sajjadium/ctf-archives/tree/main/ctfs/"
+        c.files.forEach(f => {
+          if (f !== null) {
+            validFiles.push(f);
+          } else {
+            hasNullFiles = true;
+          }
+        });
+
+        
+        let filesHtml = '';
+        if (validFiles.length > 0 || hasNullFiles) {
+          filesHtml = `<div class="row mt-4"><div class="col-md-12">`;
+            if (hasNullFiles) {
+             filesHtml += `
+             <div class="alert alert-secondary mt-2 py-2">
+               <small class="text-warning"><i class="fas fa-exclamation-triangle"></i> Some files may be missing, check the source <a href=${base_url+this.ctfName.replaceAll("_","/")}/${c.category}>here </a></strong></small>
+             </div>`;
+          }
+          
+          validFiles.forEach(f => {
+            const filename = this.formatFilename(f);
+            filesHtml += `
+              <a href="${f}" target="_blank" class="btn btn-info btn-file mb-1 me-1 d-inline-block file-attachment">
+                <i class="fas fa-download"></i> ${filename}
+              </a>`;
+          });
+          filesHtml += `</div></div>`;
+        }
+
+        
+        this.modalContent = `
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-body py-4 px-4 px-sm-5">
+                <div>
+                  <button type="button" class="btn-close float-end" data-bs-dismiss="modal" aria-label="Close"></button>
+                  <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                      <button class="nav-link active" data-bs-target="#challenge">Challenge</button>
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div class="tab-content">
+                    <div role="tabpanel" class="tab-pane fade show active" id="challenge">
+                      <h2 class="challenge-name text-center pt-3">${c.name}</h2>
+                      <h3 class="challenge-value text-center">${c.value}</h3>
+
+                      <div class="challenge-tags text-center">
+                         <span class="badge bg-secondary">${c.category}</span>
+                      </div>
+
+                      <span class="challenge-desc d-block mt-3">${c.description}</span>
+                      
+                      ${filesHtml}
+
+                      <div class="row submit-row mt-4">
+                        <div class="col-12 col-sm-8">
+                          <input class="challenge-input form-control" type="text" placeholder="Flag">
+                        </div>
+                        <div class="col-12 col-sm-4 mt-3 mt-sm-0 key-submit">
+                          <button class="challenge-submit btn btn-outline-secondary w-100 h-100" type="button" onclick="alert('Static Archive: Flags are not verified.')">
+                            Submit
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        this.$nextTick(() => {
+          const modalEl = document.getElementById('challenge-window');
+          const modal = new bootstrap.Modal(modalEl);
+          modal.show();
+        });
+      }
+    }));
+  });
+</script>
+</body>
+</html>
