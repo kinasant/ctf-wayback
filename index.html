@@ -10,6 +10,7 @@
 
   gtag('config', 'G-NETPXX7QKR');
 </script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@7.1.0"></script>
   <title>CTF Wayback</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -149,27 +150,32 @@
         Alpine.data('ArchiveSearch', () => ({
             search: '',
             ctfs: [],
+            fuse: null,
             
             async init() {
                 try {
                     const response = await fetch('index.json');
                     if (!response.ok) throw new Error('Failed to load CTF list');
                     this.ctfs = await response.json();
+                    this.fuse = new Fuse(this.ctfs, {
+                        keys: ['name'],               
+                        threshold: 0.4,               
+                        ignoreLocation: true,
+                    });
                 } catch (error) {
                     console.error("Error loading index.json:", error);
                     this.ctfs = [
                         { name: "Error: Create index.json", file: "#" }
                     ];
                 }
+
             },
 
             get filteredCtfs() {
                 if (this.search === '') {
                     return this.ctfs;
                 }
-                return this.ctfs.filter(item => {
-                    return item.name.toLowerCase().includes(this.search.toLowerCase());
-                });
+                return this.fuse.search(this.search).map(result => result.item);
             }
         }))
     })
