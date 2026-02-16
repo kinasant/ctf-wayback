@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html data-bs-theme="dark">
 <head>
   <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-NETPXX7QKR"></script>
@@ -10,7 +10,6 @@
 
   gtag('config', 'G-NETPXX7QKR');
 </script>
-<script src="https://cdn.jsdelivr.net/npm/fuse.js@7.1.0"></script>
   <title>CTF Wayback</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,6 +17,8 @@
   <link rel="stylesheet" href="./open_files/main.e9ec7884.css">
   
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
 
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
@@ -28,36 +29,63 @@
     }
   </script>
   <style>
+    :root {
+        --search-bg: #ffffff;
+        --search-text: #212529;
+        --search-border: #ced4da;
+        --list-bg: #ffffff;
+        --list-item-hover: #f8f9fa;
+        --addon-bg: #e9ecef;
+    }
+
+    [data-bs-theme="dark"] {
+        --search-bg: #1a1a1a;
+        --search-text: #ffffff;
+        --search-border: #464646;
+        --list-bg: #2b2b2b;
+        --list-item-hover: #3a3a3a;
+        --addon-bg: #212529;
+    }
+
     .ctf-result-list {
         max-height: 250px;
         overflow-y: auto;
-        background-color: #2b2b2b;
-        border: 1px solid #464646;
+        background-color: var(--list-bg);
+        border: 1px solid var(--search-border);
         border-radius: 0 0 5px 5px;
     }
     .ctf-result-item {
-        border-bottom: 1px solid #464646;
+        border-bottom: 1px solid var(--search-border);
         transition: background 0.2s;
     }
     .ctf-result-item:hover {
-        background-color: #3a3a3a;
+        background-color: var(--list-item-hover);
     }
     .ctf-result-item a {
         text-decoration: none;
-        color: #ffffff;
+        color: var(--search-text);
         display: block;
         padding: 10px 15px;
     }
     .search-input {
-        background-color: #1a1a1a;
-        color: white;
-        border: 1px solid #464646;
+        background-color: var(--search-bg);
+        color: var(--search-text);
+        border: 1px solid var(--search-border);
     }
     .search-input:focus {
-        background-color: #222;
-        color: white;
+        background-color: var(--search-bg);
+        color: var(--search-text);
         border-color: #2196f3;
         box-shadow: none;
+    }
+    .search-addon {
+        background-color: var(--addon-bg);
+        color: var(--search-text);
+        border: 1px solid var(--search-border);
+    }
+    .search-input::placeholder {
+        color: var(--search-text);
+        opacity: 0.6;
     }
   </style>
 
@@ -102,7 +130,7 @@
         </h3>
         <div x-data="ArchiveSearch" class="mb-5">
             <div class="input-group">
-                <span class="input-group-text bg-dark border-secondary text-light">
+                <span class="input-group-text search-addon">
                     <i class="fas fa-search"></i>
                 </span>
                 <input type="text" 
@@ -157,24 +185,30 @@
                     const response = await fetch('index.json');
                     if (!response.ok) throw new Error('Failed to load CTF list');
                     this.ctfs = await response.json();
+
                     this.fuse = new Fuse(this.ctfs, {
-                        keys: ['name'],               
-                        threshold: 0.4,               
-                        ignoreLocation: true,
+                        keys: ['name'],
+                        threshold: 0.4,
+                        ignoreLocation: true
                     });
+
                 } catch (error) {
                     console.error("Error loading index.json:", error);
                     this.ctfs = [
                         { name: "Error: Create index.json", file: "#" }
                     ];
                 }
-
             },
 
             get filteredCtfs() {
                 if (this.search === '') {
                     return this.ctfs;
                 }
+                
+                if (!this.fuse) {
+                    return this.ctfs;
+                }
+
                 return this.fuse.search(this.search).map(result => result.item);
             }
         }))
